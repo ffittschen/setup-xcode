@@ -16,7 +16,9 @@ export interface XcodeVersion {
 
 export const parsePlistFile = (plistPath: string): plist.PlistObject | null => {
     if (!fs.existsSync(plistPath)) {
-        core.debug(`Unable to open plist file. File doesn't exist on path '${plistPath}'`);
+        core.debug(
+            `Unable to open plist file. File doesn't exist on path '${plistPath}'`
+        );
         return null;
     }
 
@@ -28,30 +30,58 @@ export const getInstalledXcodeApps = (): string[] => {
     const applicationsDirectory = "/Applications";
     const xcodeAppFilenameRegex = /^Xcode.*\.app$/;
 
-    const allApplicationsChildItems = fs.readdirSync(applicationsDirectory, { encoding: "utf8", withFileTypes: true });
-    const allApplicationsRealItems = allApplicationsChildItems.filter(child => !child.isSymbolicLink() && child.isDirectory());
-    const xcodeAppsItems = allApplicationsRealItems.filter(app => xcodeAppFilenameRegex.test(app.name));
-    return xcodeAppsItems.map(child => path.join(applicationsDirectory, child.name));
+    const allApplicationsChildItems = fs.readdirSync(applicationsDirectory, {
+        encoding: "utf8",
+        withFileTypes: true,
+    });
+    core.debug(`allApplicationsChildItems: ${allApplicationsChildItems}`);
+    const allApplicationsRealItems = allApplicationsChildItems.filter(
+        (child) => !child.isSymbolicLink() && child.isDirectory()
+    );
+    core.debug(`allApplicationsRealItems: ${allApplicationsRealItems}`);
+    const xcodeAppsItems = allApplicationsRealItems.filter((app) =>
+        xcodeAppFilenameRegex.test(app.name)
+    );
+    core.debug(`xcodeAppsItems: ${xcodeAppsItems}`);
+    return xcodeAppsItems.map((child) =>
+        path.join(applicationsDirectory, child.name)
+    );
 };
 
-export const getXcodeReleaseType = (xcodeRootPath: string): XcodeVersionReleaseType => {
-    const licenseInfo = parsePlistFile(path.join(xcodeRootPath, "Contents", "Resources", "LicenseInfo.plist"));
+export const getXcodeReleaseType = (
+    xcodeRootPath: string
+): XcodeVersionReleaseType => {
+    const licenseInfo = parsePlistFile(
+        path.join(xcodeRootPath, "Contents", "Resources", "LicenseInfo.plist")
+    );
     const licenseType = licenseInfo?.licenseType?.toString()?.toLowerCase();
     if (!licenseType) {
-        core.debug("Unable to determine Xcode version type based on license plist");
-        core.debug("Xcode License plist doesn't contain 'licenseType' property");
+        core.debug(
+            "Unable to determine Xcode version type based on license plist"
+        );
+        core.debug(
+            "Xcode License plist doesn't contain 'licenseType' property"
+        );
         return "Unknown";
     }
 
     return licenseType.includes("beta") ? "Beta" : "GM";
 };
 
-export const getXcodeVersionInfo = (xcodeRootPath: string): XcodeVersion | null => {
-    const versionInfo = parsePlistFile(path.join(xcodeRootPath, "Contents", "version.plist"));
-    const xcodeVersion = semver.coerce(versionInfo?.CFBundleShortVersionString?.toString());
+export const getXcodeVersionInfo = (
+    xcodeRootPath: string
+): XcodeVersion | null => {
+    const versionInfo = parsePlistFile(
+        path.join(xcodeRootPath, "Contents", "version.plist")
+    );
+    const xcodeVersion = semver.coerce(
+        versionInfo?.CFBundleShortVersionString?.toString()
+    );
     const xcodeBuildNumber = versionInfo?.ProductBuildVersion?.toString();
     if (!xcodeVersion || !semver.valid(xcodeVersion)) {
-        core.debug(`Unable to retrieve Xcode version info on path '${xcodeRootPath}'`);
+        core.debug(
+            `Unable to retrieve Xcode version info on path '${xcodeRootPath}'`
+        );
         return null;
     }
 
@@ -65,4 +95,3 @@ export const getXcodeVersionInfo = (xcodeRootPath: string): XcodeVersion | null 
         path: xcodeRootPath,
     } as XcodeVersion;
 };
-

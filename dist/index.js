@@ -171,11 +171,17 @@ exports.parsePlistFile = (plistPath) => {
 };
 exports.getInstalledXcodeApps = () => {
     const applicationsDirectory = "/Applications";
-    const xcodeAppFilenameRegex = /Xcode_([\d.]+)(_beta)?\.app/;
-    const allApplicationsChildItems = fs.readdirSync(applicationsDirectory, { encoding: "utf8", withFileTypes: true });
-    const allApplicationsRealItems = allApplicationsChildItems.filter(child => !child.isSymbolicLink() && child.isDirectory());
-    const xcodeAppsItems = allApplicationsRealItems.filter(app => xcodeAppFilenameRegex.test(app.name));
-    return xcodeAppsItems.map(child => path.join(applicationsDirectory, child.name));
+    const xcodeAppFilenameRegex = /^Xcode.*\.app$/;
+    const allApplicationsChildItems = fs.readdirSync(applicationsDirectory, {
+        encoding: "utf8",
+        withFileTypes: true,
+    });
+    core.debug(`allApplicationsChildItems: ${allApplicationsChildItems}`);
+    const allApplicationsRealItems = allApplicationsChildItems.filter((child) => !child.isSymbolicLink() && child.isDirectory());
+    core.debug(`allApplicationsRealItems: ${allApplicationsRealItems}`);
+    const xcodeAppsItems = allApplicationsRealItems.filter((app) => xcodeAppFilenameRegex.test(app.name));
+    core.debug(`xcodeAppsItems: ${xcodeAppsItems}`);
+    return xcodeAppsItems.map((child) => path.join(applicationsDirectory, child.name));
 };
 exports.getXcodeReleaseType = (xcodeRootPath) => {
     var _a, _b;
