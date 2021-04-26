@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import { XcodeSelector } from "./xcode-selector";
 import { EOL } from "os";
 
-const run = (): void => {
+const run = async (): Promise<void> => {
     try {
         if (process.platform !== "darwin") {
             throw new Error(`This task is intended only for macOS platform. It can't be run on '${process.platform}' platform`);
@@ -30,7 +30,7 @@ const run = (): void => {
         }
 
         core.debug(`Xcode ${targetVersion.version} (${targetVersion.buildNumber}) (${targetVersion.path}) will be set`);
-        selector.setVersion(targetVersion);
+        await selector.setVersion(targetVersion);
         core.info(`Xcode is set to ${targetVersion.version} (${targetVersion.buildNumber})`);
     } catch (error) {
         core.setFailed(error.message);

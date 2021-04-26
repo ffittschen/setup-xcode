@@ -1,5 +1,5 @@
-import * as child from "child_process";
 import * as core from "@actions/core";
+import * as exec from "@actions/exec";
 import * as fs from "fs";
 import * as semver from "semver";
 import { getInstalledXcodeApps, getXcodeVersionInfo, XcodeVersion } from "./xcode-utils";
@@ -30,15 +30,28 @@ export class XcodeSelector {
         return availableVersions.find(ver => semver.satisfies(ver.version, versionSpec)) ?? null;
     }
 
-    setVersion(xcodeVersion: XcodeVersion): void {
+    async setVersion(xcodeVersion: XcodeVersion): Promise<void> {
         if (!fs.existsSync(xcodeVersion.path)) {
-            throw new Error(`Invalid version: Directory '${xcodeVersion.path}' doesn't exist`);
+            return Promise.reject(
+                new Error(
+                    `Invalid version: Directory '${xcodeVersion.path}' doesn't exist`
+                )
+            );
         }
 
-        child.spawnSync("sudo", ["xcode-select", "-s", xcodeVersion.path]);
 
         // set "MD_APPLE_SDK_ROOT" environment variable to specify Xcode for Mono and Xamarin
         core.exportVariable("MD_APPLE_SDK_ROOT", xcodeVersion.path);
+
+        return await exec
+            .exec(
+                "sudo",
+                ["xcode-select", "-s", xcodeVersion.path]
+                // options
+            )
+            .then(() => {
+                return undefined;
+            });
     }
     
 }
